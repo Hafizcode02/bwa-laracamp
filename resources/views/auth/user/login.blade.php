@@ -34,7 +34,8 @@
             </p>
             <p>
                 <a class="btn btn-border btn-google-login" href="{{ route('user.login.google') }}">
-                    <img src="{{ asset('/assets/images/ic_google.svg') }}" class="icon" alt=""> Sign In with Google
+                    <img src="{{ asset('/assets/images/ic_google.svg') }}" class="icon" alt=""> Sign In with
+                    Google
                 </a>
             </p>
             <img src="{{ asset('/assets/images/people.png') }}" class="people" alt="">
