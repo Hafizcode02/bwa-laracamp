@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
+use App\Models\Camp;
 use App\Models\Checkout;
-use App\Http\Requests\StoreCheckoutRequest;
-use App\Http\Requests\UpdateCheckoutRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
@@ -23,20 +25,35 @@ class CheckoutController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Camp $camp)
     {
-        //
+        return view('checkout.create', compact('camp'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreCheckoutRequest  $request
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreCheckoutRequest $request)
+    public function store(Request $request, Camp $camp)
     {
-        //
+        // mapping request data
+        $data = $request->all();
+        $data['user_id'] = Auth::id();
+        $data['camp_id'] = $camp->id;
+
+        // update user data
+        $user = Auth::user();
+        $user->email = $data['email'];
+        $user->name = $data['fullname'];
+        $user->occupation = $data['occupation'];
+        $user->save();
+
+        // create checkout
+        $checkout = Checkout::create($data);
+
+        return redirect(route('checkout.success'));
     }
 
     /**
@@ -64,11 +81,11 @@ class CheckoutController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateCheckoutRequest  $request
+     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Checkout  $checkout
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateCheckoutRequest $request, Checkout $checkout)
+    public function update(Request $request, Checkout $checkout)
     {
         //
     }
@@ -82,5 +99,10 @@ class CheckoutController extends Controller
     public function destroy(Checkout $checkout)
     {
         //
+    }
+
+    public function success()
+    {
+        return view('checkout.success');
     }
 }
