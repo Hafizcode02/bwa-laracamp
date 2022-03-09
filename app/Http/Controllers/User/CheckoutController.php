@@ -7,6 +7,7 @@ use App\Models\Camp;
 use App\Models\Checkout;
 use App\Http\Requests\User\Checkout\Store;
 use App\Mail\Checkout\AfterCheckout;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -18,7 +19,7 @@ class CheckoutController extends Controller
 
     public function __construct()
     {
-        Midtrans\Config::$serverKey = env('MIDTRANS_SERVERKEY');
+        Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION');
         Midtrans\Config::$isSanitized = env('MIDTRANS_IS_SANITIZES');
         Midtrans\Config::$is3ds = env('MIDTRANS_IS_3DS');
@@ -66,15 +67,18 @@ class CheckoutController extends Controller
         $user->email = $data['email'];
         $user->name = $data['fullname'];
         $user->occupation = $data['occupation'];
+        $user->phone = $data['phone'];
+        $user->address = $data['address'];
         $user->save();
 
         // create checkout
         $checkout = Checkout::create($data);
 
         // snap midtrans
-        $this->getSnapRedirect($checkout);
+        $snap = $this->getSnapRedirect($checkout);
 
         Mail::to(Auth::user()->email)->send(new AfterCheckout($checkout));
+
 
         return redirect(route('checkout.success'));
     }
@@ -172,8 +176,8 @@ class CheckoutController extends Controller
 
         $midtrans_params = [
             'transaction_details' => $transaction_details,
-            'item_details' => $item_details,
             'customer_details' => $customer_details,
+            'item_details' => $item_details,
         ];
 
         try {
@@ -181,16 +185,15 @@ class CheckoutController extends Controller
             $paymentUrl = \Midtrans\Snap::createTransaction($midtrans_params)->redirect_url;
             $checkout->midtrans_url = $paymentUrl;
             $checkout->save();
-
             return $paymentUrl;
-        } catch (\Throwable $th) {
-            return false;
+        } catch (Exception $e) {
+            return $e;
         }
     }
 
     public function midtransCallback(Request $request)
     {
-        $notif = new Midtrans\Notification();
+        $notif = $request->method() == 'POST' ? new Midtrans\Notification() : Midtrans\Transaction::status($request->order_id);
 
         $transaction_status = $notif->transaction_status;
         $fraud = $notif->fraud_status;
