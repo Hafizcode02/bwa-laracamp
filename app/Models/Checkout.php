@@ -39,4 +39,14 @@ class Checkout extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the Discount that owns the Checkout
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function Discount(): BelongsTo
+    {
+        return $this->belongsTo(Discount::class);
+    }
 }
